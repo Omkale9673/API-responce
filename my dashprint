@@ -82,53 +82,7 @@ class DashPrintPage extends StatelessWidget {
                   ),
                 ),
               ),
-            ),import 'package:flutter/material.dart';
-
-class batterypercentage extends StatelessWidget {
-  final Map<String, dynamic> dashboardData;
-
-  batterypercentage({required this.dashboardData});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 250),
-        child: Align(
-          alignment: Alignment
-              .center, // Centers the content both vertically and horizontally
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // Wrap the texts with Column
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${dashboardData['data'][0]['battery_percentage']}%',
-                    style: TextStyle(
-                      fontSize: 24, // Larger font size for battery percentage
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4), // Small space between texts
-                  Text(
-                    'Battery',
-                    style: TextStyle(
-                      fontSize: 16, // Smaller font size for "Battery"
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              // Add more fields as needed from the dashboardData
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+            ),
           ),
         );
       },

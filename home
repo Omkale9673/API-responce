@@ -1,0 +1,34 @@
+import 'package:flutter/material.dart';
+
+class MyHome extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Get the arguments from the route
+    final Map<String, dynamic> args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final String sessionId = args['sessionId'] as String? ?? 'No session ID';
+    final String vehicleId = args['vehicleId'] as String? ?? 'No vehicle ID';
+    final Map<String, dynamic>? dashboardData =
+        args['dashboardData'] as Map<String, dynamic>?;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('My Home'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text('Session ID: $sessionId'),
+            Text('Vehicle ID: $vehicleId'),
+            if (dashboardData != null) ...[
+              Text('Dashboard Data:'),
+              Text(dashboardData.toString()),
+              // You can format and display the data as needed
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

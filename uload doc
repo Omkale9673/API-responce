@@ -1,0 +1,75 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+
+class UploadImagePage extends StatefulWidget {
+  @override
+  _UploadImagePageState createState() => _UploadImagePageState();
+}
+
+class _UploadImagePageState extends State<UploadImagePage> {
+  File? _image;
+  final picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
+
+  Future<void> _uploadImage() async {
+    if (_image == null) return;
+
+    final uri = Uri.parse('http://34.93.202.185:5000/api/v1/add_user_documents');
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', _image!.path))
+      ..fields['data'] = jsonEncode({
+        "vehicle_id": "brk123456789",
+        "document_name": "profile_picture",
+        "session": "your_session_key"
+      });
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      print('Image uploaded successfully!');
+    } else {
+      print('Image upload failed: ${response.statusCode}');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Upload Image'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            _image == null
+                ? Text('No image selected.')
+                : Image.file(_image!),
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: Text('Pick Image'),
+            ),
+            ElevatedButton(
+              onPressed: _uploadImage,
+              child: Text('Upload Image'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

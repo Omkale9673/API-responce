@@ -5,6 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 class UploadImagePage extends StatefulWidget {
+
+  final String sessionId;
+  final String vehicleId;
+
+  const UploadImagePage(
+      {super.key, required this.sessionId, required this.vehicleId});
+      
   @override
   _UploadImagePageState createState() => _UploadImagePageState();
 }
@@ -32,9 +39,9 @@ class _UploadImagePageState extends State<UploadImagePage> {
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', _image!.path))
       ..fields['data'] = jsonEncode({
-        "vehicle_id": "brk123456789",
+        "vehicle_id": widget.vehicleId,
         "document_name": "profile_picture",
-        "session": "your_session_key"
+        "session": widget.sessionId
       });
 
     final response = await request.send();

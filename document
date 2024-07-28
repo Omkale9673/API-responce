@@ -1,0 +1,166 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
+
+class DocumentPage extends StatefulWidget {
+  final String sessionId;
+  final String vehicleId;
+
+  DocumentPage({required this.sessionId, required this.vehicleId});
+
+  @override
+  _DocumentPageState createState() => _DocumentPageState();
+}
+
+class _DocumentPageState extends State<DocumentPage> {
+  File? _imageFile;
+  List<Uint8List> _fetchedImages = [];
+  final picker = ImagePicker();
+  final String apiUrl = 'http://34.93.202.185:5000';
+
+  Future<void> _pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_imageFile == null) return;
+
+    var request = http.MultipartRequest('POST', Uri.parse('$apiUrl/api/v1/add_user_documents'));
+    request.fields['data'] = jsonEncode({
+      'vehicle_id': widget.vehicleId,
+      'document_name': 'profile_picture',
+      'session': widget.sessionId,
+    });
+
+    request.files.add(await http.MultipartFile.fromPath('file', _imageFile!.path));
+
+    var response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    print('Upload Response: $responseBody');
+
+    if (response.statusCode == 200) {
+      print('Upload successful');
+    } else {
+      print('Upload failed');
+    }
+  }
+
+  Future<void> _fetchDocument() async {
+    final response = await http.get(
+      Uri.parse('$apiUrl/user_documents?vehicle_id=${widget.vehicleId}&session=${widget.sessionId}')
+    );
+
+    print('Fetch Document Response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Decoded Data: $data');
+
+      if (data['data'] is List) {
+        List<dynamic> documents = data['data'];
+        List<Uint8List> images = [];
+        for (var doc in documents) {
+          if (doc['data'] is String) {
+            images.add(base64Decode(doc['data']));
+          }
+        }
+        setState(() {
+          _fetchedImages = images;
+        });
+      } else {
+        print('Unexpected data format');
+      }
+    } else {
+      print('Failed to fetch documents');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDocument();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Document Page'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Display picked image or fetched images
+            if (_fetchedImages.isNotEmpty) 
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: _fetchedImages.map((imageData) {
+                  return Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Image.memory(
+                      imageData,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                }).toList(),
+              )
+            else if (_imageFile != null)
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Image.file(
+                  _imageFile!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            else
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: Placeholder(),
+              ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _pickImage,
+                  child: Text('Pick Image'),
+                ),
+                SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _uploadImage,
+                  child: Text('Upload Image'),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchDocument,
+              child: Text('Fetch Document'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

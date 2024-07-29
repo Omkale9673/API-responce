@@ -49,16 +49,53 @@ class _LoginPageState extends State<LoginPage> {
     print('Response Body: ${response.body}'); // Debugging statement
 
     if (response.statusCode == 200) {
-      Navigator.pushNamed(
-        context,
-        'otp',
-        arguments: mobileNumber,
-      );
+      try {
+        final responseBody = jsonDecode(response.body);
+
+        if (responseBody['message'] == 'success' &&
+            responseBody['status'] == 200) {
+          Navigator.pushNamed(
+            context,
+            'otp',
+            arguments: mobileNumber,
+          );
+        } else {
+          _showErrorDialog(
+              'You cannot login as your mobile number is not registered with it.');
+        }
+      } catch (e) {
+        _showErrorDialog('Error parsing response');
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send OTP')),
-      );
+      _showErrorDialog('Failed to send OTP');
     }
+  }
+
+  void _showErrorDialog(String message, {VoidCallback? onOK}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Raleway',
+              color: Color.fromARGB(255, 0, 0, 0),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        );
+      },
+    );
+
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.of(context).pop();
+      if (onOK != null) {
+        onOK();
+      }
+    });
   }
 
   @override

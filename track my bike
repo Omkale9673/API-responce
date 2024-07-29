@@ -7,7 +7,10 @@ class FindMyVehicle extends StatefulWidget {
   final String sessionId;
   final String vehicleId;
 
-  FindMyVehicle({required this.sessionId, required this.vehicleId, Map<String, dynamic>? dashboardData});
+  FindMyVehicle(
+      {required this.sessionId,
+      required this.vehicleId,
+      Map<String, dynamic>? dashboardData});
 
   @override
   _FindMyVehicleState createState() => _FindMyVehicleState();
@@ -16,7 +19,7 @@ class FindMyVehicle extends StatefulWidget {
 class _FindMyVehicleState extends State<FindMyVehicle> {
   Map<String, dynamic>? vehicleLocation;
   bool isLoading = true;
-  final String googleApiKey = 'AIzaSyBVn1idxtxfsovEZx8uUVc4NEp1pn9_FEE'; // Replace with your actual API key
+  final String googleApiKey = 'AIzaSyBVn1idxtxfsovEZx8uUVc4NEp1pn9_FEE';
 
   @override
   void initState() {
@@ -46,7 +49,8 @@ class _FindMyVehicleState extends State<FindMyVehicle> {
     }
   }
 
-  Widget _buildDialogOption(String imagePath, String label, VoidCallback onTap, double width) {
+  Widget _buildDialogOption(
+      String imagePath, String label, VoidCallback onTap, double width) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -65,104 +69,77 @@ class _FindMyVehicleState extends State<FindMyVehicle> {
     );
   }
 
-  void _showDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            dialogBackgroundColor: Colors.white,
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : vehicleLocation != null
+                  ? VehicleMap(
+                      latitude: vehicleLocation!['latitude'],
+                      longitude: vehicleLocation!['longitude'],
+                    )
+                  : Center(child: Text('Location not found')),
+          Positioned(
+            top: screenHeight * 0.08,
+            left: screenWidth * 0.07,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.arrow_back_ios,
+                    color: Colors.black,
+                    size: screenWidth * 0.05,
+                  ),
+                  SizedBox(width: screenWidth * 0.01),
+                  Text(
+                    'Back',
+                    style: TextStyle(
+                      fontFamily: 'Goldman',
+                      fontSize: screenWidth * 0.045,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
+          Positioned(
+            bottom: screenHeight * 0.1,
+            right: screenWidth * 0.05,
+            child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildDialogOption(
-                        'assets/images/horn.png',
-                        'Horn',
-                        () {},
-                        MediaQuery.of(context).size.width,
-                      ),
-                      _buildDialogOption(
-                        'assets/images/light.png',
-                        'Turn ON lights',
-                        () {},
-                        MediaQuery.of(context).size.width,
-                      ),
-                    ],
-                  ),
+                FloatingActionButton(
+                  onPressed: () {
+                    // Implement your horn action here
+                    print('Horn button pressed');
+                  },
+                  child: Icon(Icons.volume_up),
+                  tooltip: 'Horn',
                 ),
-                const SizedBox(height: 20),
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                        ),
-                        child: Container(
-                          width: 100,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: const Color.fromARGB(255, 9, 84, 94),
-                              width: 2.0,
-                            ),
-                            borderRadius: BorderRadius.circular(35),
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 9, 84, 94),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                SizedBox(height: screenHeight * 0.02),
+                FloatingActionButton(
+                  onPressed: () {
+                    // Implement your lights action here
+                    print('Lights button pressed');
+                  },
+                  child: Icon(Icons.lightbulb),
+                  tooltip: 'Lights',
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Vehicle Location'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.more_vert),
-            onPressed: () {
-              _showDialog(context);
-            },
-          ),
         ],
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : vehicleLocation != null
-              ? VehicleMap(
-                  latitude: vehicleLocation!['latitude'],
-                  longitude: vehicleLocation!['longitude'],
-                )
-              : Center(child: Text('Location not found')),
     );
   }
 }
@@ -175,7 +152,7 @@ class VehicleMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng vehicleLocation = LatLng( longitude,latitude);
+    final LatLng vehicleLocation = LatLng(longitude, latitude);
 
     return GoogleMap(
       initialCameraPosition: CameraPosition(

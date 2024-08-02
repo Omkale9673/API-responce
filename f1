@@ -1,0 +1,148 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:typed_data';
+
+class FetchPage extends StatefulWidget {
+  final String sessionId;
+  final String vehicleId;
+
+  FetchPage({required this.sessionId, required this.vehicleId});
+
+  @override
+  _FetchPageState createState() => _FetchPageState();
+}
+
+class _FetchPageState extends State<FetchPage> {
+  List<Map<String, dynamic>> _fetchedDocuments = [];
+  final String apiUrl = 'http://34.93.202.185:5000';
+
+  Future<void> _fetchDocuments() async {
+    // Document names to fetch
+    List<String> documentNames = ['dd1', 'dd2', 'dd3', 'dd4']; 
+
+    List<Map<String, dynamic>> documents = [];
+    for (String name in documentNames) {
+      final response = await http.get(
+        Uri.parse('$apiUrl/get_document?vehicle_id=${widget.vehicleId}&session=${widget.sessionId}&user_document_name=$name')
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'] is Map && data['data']['data'] is String) {
+          final doc = data['data'];
+          documents.add({
+            'name': _getDocumentName(name),
+            'data': base64Decode(doc['data']),
+          });
+        } else {
+          print('Unexpected data format for $name');
+        }
+      } else {
+        print('Failed to fetch $name');
+      }
+    }
+
+    setState(() {
+      _fetchedDocuments = documents;
+    });
+  }
+
+  String _getDocumentName(String documentType) {
+    switch (documentType) {
+      case 'dd1':
+        return 'Adhar Card Front';
+      case 'dd2':
+        return 'Adhar Card Back';
+      case 'dd3':
+        return 'Driving License';
+      case 'dd4':
+        return 'PAN Card';
+      default:
+        return 'Unknown Document';
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDocuments();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Fetched Documents'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: _fetchedDocuments.map((doc) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenImagePage(
+                        imageData: doc['data'],
+                        imageName: doc['name'],
+                      ),
+                    ),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Image.memory(
+                        doc['data'],
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    SizedBox(height: 8.0),
+                    Text(
+                      doc['name'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class FullScreenImagePage extends StatelessWidget {
+  final Uint8List imageData;
+  final String imageName;
+
+  FullScreenImagePage({required this.imageData, required this.imageName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(imageName),
+      ),
+      body: Center(
+        child: Image.memory(
+          imageData,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+}
